@@ -16,7 +16,12 @@ export default class CachedRequestsManager {
             CachedRequestsManager.startCachedRequestsCleaner();
         }
         if (url != "") {
-            cachedRequests.push({ url, content, ETag, Expire_Time: utilities.nowInSeconds() + requestCacheExpirationTime });
+            cachedRequests.push(
+                {   url, 
+                    content, 
+                    ETag, 
+                    Expire_Time: utilities.nowInSeconds() + requestCacheExpirationTime 
+                });
             console.log(BgCyan + FgWhite, `[Response content of request GET: ${url} has been cached]`);
         }
     }
@@ -63,7 +68,7 @@ export default class CachedRequestsManager {
                     return true;
                 } else {
                     CachedRequestsManager.clear(HttpContext.path.model);
-                    console.log(BgCyan + FgWhite, `[Caches of obselete data of ${HttpContext.path.model} deleted.]`);
+                    console.log(BgCyan + FgWhite, `[Caches of obselete ${HttpContext.path.model} data deleted.]`);
                     return false;
                 }
             }
