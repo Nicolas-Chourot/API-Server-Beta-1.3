@@ -27,8 +27,7 @@ export default class Repository {
         this.initEtag();
     }
     valid() {
-        let valid = this.errorMessages.length == 0;
-        return valid;
+        return this.errorMessages.length == 0;
     }
     initEtag() {
         if (this.objectsName in global.repositoryEtags)
@@ -114,13 +113,14 @@ export default class Repository {
             this.checkConflict(object);
             if (!this.model.state.inConflict) {
                 object.Id = this.createId();
+                this.model.handleAssets(object);
                 this.objectsList.push(object);
                 this.write();
             }
         }
         return object;
     }
-    update(id, object) {
+    update(id, object, handleAssets = true) {
         let objectToModify = { ...object };
         delete objectToModify.Id;
         if (!this.model.securedId)
@@ -132,6 +132,8 @@ export default class Repository {
             if (index > -1) {
                 this.checkConflict(objectToModify);
                 if (!this.model.state.inConflict) {
+                     if (handleAssets)
+                        this.model.handleAssets(objectToModify, this.objectsList[index]);
                     this.objectsList[index] = objectToModify;
                     this.write();
                 }
@@ -156,8 +158,17 @@ export default class Repository {
         }
         return false;
     }
-    getAll(params = null) {
-        let collectionFilter = new CollectionFilter(this.objects(), params, this.model);
+    getAll(params = null, dontBind = false) {
+        let objectsList = this.objects();
+        let bindedDatas = [];
+        if (objectsList)
+            for (let data of objectsList) {
+                if (dontBind)
+                    bindedDatas.push(data);
+                else
+                    bindedDatas.push(this.model.bindExtraData(data));
+            }
+        let collectionFilter = new CollectionFilter(bindedDatas, params, this.model);
         if (collectionFilter.valid())
             return collectionFilter.get();
         else {
@@ -165,12 +176,15 @@ export default class Repository {
             return null;
         }
     }
-    get(id) {
+    get(id, dontBind = false) { // dontbind is used in Model.bindExtraData: set to true when joining data from another model
         if (!this.model.securedId)
             id = parseInt(id);
         for (let object of this.objects()) {
             if (object.Id === id) {
-                return object;
+                if (dontBind)
+                    return object;
+                else
+                    return this.model.bindExtraData(object);
             }
         }
         return null;

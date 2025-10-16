@@ -80,7 +80,7 @@ function initFormValidation() {
                     event.target.setCustomValidity(CustomErrorMessage);
                 else
                     event.target.setCustomValidity(InvalidMessage);
-            //console.log(event.target.name, event.target.validity);
+            console.log(event.target.name, event.target.validity);
         })
     });
 
@@ -91,5 +91,45 @@ function initFormValidation() {
         matchedInput.on("focus", function () { input.attr("pattern", matchedInput.val()); })
         input.on("focus", function () { input.attr("pattern", matchedInput.val()); })
     })
+}
+
+let timer;
+const waitTime = 500;
+let conflict = false;
+function remoteValidation(url) {
+    let result = new Promise(resolve => {
+        $.ajax({
+            url: url,
+            contentType: 'application/json',
+            success: result => { resolve(result); },
+            error: () => { resolve(false); }
+        });
+    })
+    return result;
+}
+async function ConflictTestRequest(serviceUrl, fieldName) {
+    let fieldControl = $('#' + fieldName);
+    let testConflictURL = serviceUrl + "?" + fieldName + "=" + fieldControl.val() + "&Id=" + $("#Id").val();
+    let result = await remoteValidation(testConflictURL);
+    if (result)
+        fieldControl[0].setCustomValidity(fieldControl.attr("CustomErrorMessage"));
+    else
+        fieldControl[0].setCustomValidity("");
+    fieldControl[0].reportValidity();
+    conflict = result;
+}
+function DelayedConflictTestRequest(serviceUrl, fieldName) {
+    clearTimeout(timer);
+    timer = setTimeout(() => { ConflictTestRequest(serviceUrl, fieldName) }, waitTime);
+}
+function Conflict() {
+    return conflict;
+}
+function addConflictValidation(serviceUrl, fieldName, submitBtnId) {
+    let fieldControl = $('#' + fieldName);
+    fieldControl.on("keyup", () => { DelayedConflictTestRequest(serviceUrl, fieldName) });
+    fieldControl.on("blur", () => { ConflictTestRequest(serviceUrl, fieldName) });
+    $("#" + submitBtnId).on("click", () => { ConflictTestRequest(serviceUrl, fieldName) });
+    $("#" + submitBtnId).parents('form:first').on("submit", function (e) { return !Conflict(); });
 }
 

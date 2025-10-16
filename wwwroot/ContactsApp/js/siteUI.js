@@ -35,7 +35,7 @@ function renderAbout() {
                     Auteur: Nicolas Chourot
                 </p>
                 <p>
-                    Collège Lionel-Groulx, automne 2024
+                    Collège Lionel-Groulx, automne 2023
                 </p>
             </div>
         `))
@@ -55,11 +55,11 @@ async function renderContacts() {
         // Attached click events on command icons
         $(".editCmd").on("click", function () {
             saveContentScrollPosition();
-            renderEditContactForm(parseInt($(this).attr("editContactId")));
+            renderEditContactForm($(this).attr("editContactId"));
         });
         $(".deleteCmd").on("click", function () {
             saveContentScrollPosition();
-            renderDeleteContactForm(parseInt($(this).attr("deleteContactId")));
+            renderDeleteContactForm($(this).attr("deleteContactId"));
         });
         $(".contactRow").on("click", function (e) { e.preventDefault(); })
     } else {
@@ -67,7 +67,7 @@ async function renderContacts() {
     }
 }
 function showWaitingGif() {
-    $("#content").empty();
+    eraseContent();
     $("#content").append($("<div class='waitingGifcontainer'><img class='waitingGif' src='Loading_icon.gif' /></div>'"));
 }
 function eraseContent() {
@@ -154,7 +154,10 @@ function renderContactForm(contact = null) {
     $("#abort").show();
     eraseContent();
     let create = contact == null;
-    if (create) contact = newContact();
+    if (create) {
+        contact = newContact();
+        contact.Avatar = "images/no-avatar.png";
+    }
     $("#actionTitle").text(create ? "Création" : "Modification");
     $("#content").append(`
         <form class="form" id="contactForm">
@@ -193,22 +196,30 @@ function renderContactForm(contact = null) {
                 InvalidMessage="Veuillez entrer un courriel valide"
                 value="${contact.Email}"
             />
+            <!-- nécessite le fichier javascript 'imageControl.js' -->
+            <label class="form-label">Avatar </label>
+            <div   class='imageUploader' 
+                   newImage='${create}' 
+                   controlId='Avatar' 
+                   imageSrc='${contact.Avatar}' 
+                   waitingImage="Loading_icon.gif">
+            </div>
             <hr>
             <input type="submit" value="Enregistrer" id="saveContact" class="btn btn-primary">
             <input type="button" value="Annuler" id="cancel" class="btn btn-secondary">
         </form>
     `);
-    initFormValidation();
+    initImageUploaders();
+    initFormValidation(); // important do to after all html injection!
     $('#contactForm').on("submit", async function (event) {
         event.preventDefault();
         let contact = getFormData($("#contactForm"));
-        contact.Id = parseInt(contact.Id);
         showWaitingGif();
         let result = await API_SaveContact(contact, create);
         if (result)
             renderContacts();
         else
-            renderError("Une erreur est survenue!");
+            renderError("Une erreur est survenue! " + API_getcurrentHttpError());
     });
     $('#cancel').on("click", function () {
         renderContacts();
@@ -229,9 +240,12 @@ function renderContact(contact) {
      <div class="contactRow" contact_id=${contact.Id}">
         <div class="contactContainer noselect">
             <div class="contactLayout">
-                <span class="contactName">${contact.Name}</span>
-                <span class="contactPhone">${contact.Phone}</span>
-                <span class="contactEmail">${contact.Email}</span>
+                 <div class="avatar" style="background-image:url('${contact.Avatar}')"></div>
+                 <div class="contactInfo">
+                    <span class="contactName">${contact.Name}</span>
+                    <span class="contactPhone">${contact.Phone}</span>
+                    <a href="mailto:${contact.Email}" class="contactEmail" target="_blank" >${contact.Email}</a>
+                </div>
             </div>
             <div class="contactCommandPanel">
                 <span class="editCmd cmdIcon fa fa-pencil" editContactId="${contact.Id}" title="Modifier ${contact.Name}"></span>

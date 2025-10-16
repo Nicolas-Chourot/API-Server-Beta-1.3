@@ -106,6 +106,14 @@
 
 .contactLayout {
     display: grid;
+    grid-template-columns: 100px auto;
+    padding: 10px;
+    gap: 8px;
+    align-items: center;
+}
+
+.contactInfo {
+    display: grid;
     grid-template-columns: 1fr;
     padding: 10px;
     gap: 8px;
@@ -152,9 +160,17 @@
 
 @media screen and (min-width:650px) {
 
-    .contactLayout {
-        grid-template-columns: repeat(3, 30%);
+    .contactInfo {
+        grid-template-columns: 40% 35% auto;
     }
+}
+.avatar {
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    width: 90px;
+    height: 90px;
+    border-radius: 90px;
 }
 
 form {
@@ -190,7 +206,11 @@ input {
     margin-bottom: 20px !important;
 }
 
-a {
+.contactContainer a {
     text-decoration: none !important;
     color: white !important;
+}
+
+a {
+    text-decoration: none !important;
 }

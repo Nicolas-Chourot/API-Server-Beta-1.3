@@ -5,6 +5,7 @@
 // Lionel-Groulx College
 /////////////////////////////////////////////////////////////////////
 import * as utilities from '../utilities.js';
+import * as AssetsRepository from './assetsManager.js';
 
 export default class Model {
     constructor(securedId = false) {
@@ -85,5 +86,40 @@ export default class Model {
                 case "float": instance[fieldName] = parseFloat(instance[fieldName]); break;
             }
         }
+    }
+    handleAssets(instance, storedInstance = null) {
+        this.fields.forEach(field => {
+            if ((field.name in instance) && (field.type == "asset")) {
+                if (instance[field.name] == '') {
+                    if (storedInstance != null) {
+                        instance[field.name] = storedInstance[field.name];
+                    }
+                } else {
+                    instance[field.name] = AssetsRepository.save(instance[field.name]);
+                    if (storedInstance != null) {
+                        AssetsRepository.remove(storedInstance[field.name]);
+                    }
+                }
+            }
+        });
+    }
+    removeAssets(instance) {
+        this.fields.forEach(field => {
+            if ((field.name in instance) && (field.type == "asset")) {
+                AssetsRepository.remove(instance[field.name]);
+            }
+        });
+    }
+    addHostReferenceToAssetFileNames(instance) {
+        this.fields.forEach(field => {
+            if ((field.name in instance) && (field.type == "asset")) {
+                instance[field.name] = AssetsRepository.addHostReference(instance[field.name]);
+            }
+        });
+    }
+    bindExtraData(instance) {
+        let instanceCopy = { ...instance };
+        this.addHostReferenceToAssetFileNames(instanceCopy);
+        return instanceCopy;
     }
 }
