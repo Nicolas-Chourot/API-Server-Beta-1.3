@@ -4,7 +4,9 @@
 // Author : Nicolas Chourot
 // Lionel-Groulx College
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+import * as serverVariables from "./serverVariables.js";
 import CachedRequests from "./cachedRequestsManager.js";
+let hideHeadRequest = serverVariables.get("main.hideHeadRequest");
 
 export default class Response {
     constructor(HttpContext) {
@@ -14,6 +16,9 @@ export default class Response {
         this.HttpContext = HttpContext;
         this.res = HttpContext.res;
         this.errorContent = "";
+    }
+    hiddenRequest() {
+        return (hideHeadRequest && this.HttpContext.req.method === 'HEAD');
     }
     status(number, errorMessage = '') {
         if (errorMessage) {
@@ -30,10 +35,12 @@ export default class Response {
             this.res.end(content);
         else
             this.res.end();
-        if (this.res.statusCode >= 200 && this.res.statusCode < 300)
-            console.log(Reset + BgGreen + FgWhite, "Response status:", this.res.statusCode, this.errorContent);
-        else
-            console.log(Reset + BgRed + FgWhite, "Response status:", this.res.statusCode, this.errorContent);
+        if (!this.hiddenRequest()) {
+            if (this.res.statusCode >= 200 && this.res.statusCode < 300)
+                console.log(Reset + BgGreen + FgWhite, "Response status:", this.res.statusCode, this.errorContent);
+            else
+                console.log(Reset + BgRed + FgWhite, "Response status:", this.res.statusCode, this.errorContent);
+        }
         return true;
     }
 

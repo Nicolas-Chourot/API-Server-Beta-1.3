@@ -11,19 +11,21 @@ import fs from "fs";
 import * as utilities from "../utilities.js";
 import { v1 as uuidv1 } from "uuid";
 import CollectionFilter from "./collectionFilter.js";
-
+import RepositoryCachesManager from "./repositoryCachesManager.js";
 global.repositoryEtags = {};
+global.jsonFilesPath = "jsonFiles";
 
 export default class Repository {
-    constructor(model) {
-        if (model == null) {
+   constructor(ModelClass, cached = true) {
+        if (ModelClass == null) {
             throw new Error("Cannot instantiate a repository with a null model.");
         }
         this.objectsList = null;
-        this.model = model;
-        this.objectsName = model.getClassName() + "s";
+        this.model = ModelClass;
+        this.objectsName = ModelClass.getClassName() + "s";
         this.objectsFile = `./jsonFiles/${this.objectsName}.json`;
         this.errorMessages = [];
+        this.cached = cached;
         this.initEtag();
     }
     valid() {
@@ -56,25 +58,36 @@ export default class Repository {
         return this.objects().length;
     }
     read() {
-        try {
-            let rawdata = fs.readFileSync(this.objectsFile);
-            // we assume here that the json data is formatted correctly
-            this.objectsList = JSON.parse(rawdata);
-        } catch (error) {
-            if (error.code === 'ENOENT') {
-                // file does not exist, it will be created on demand
-                console.log(FgYellow, `Warning ${this.objectsName} repository does not exist. It will be created on demand`);
-                this.objectsList = [];
-            } else {
-                console.log(FgRed, `Error while reading ${this.objectsName} repository`);
-                console.log(FgRed, '--------------------------------------------------');
-                console.log(FgRed, error);
+        this.objectsList = null;
+        if (this.cached) {
+            this.objectsList = RepositoryCachesManager.find(this.objectsName);
+        }
+        if (this.objectsList == null) {
+            try {
+                let rawdata = fs.readFileSync(this.objectsFile);
+                // we assume here that the json data is formatted correctly
+                this.objectsList = JSON.parse(rawdata);
+                if (this.cached)
+                    RepositoryCachesManager.add(this.objectsName, this.objectsList);
+            } catch (error) {
+                if (error.code === 'ENOENT') {
+                    // file does not exist, it will be created on demand
+                    console.log(FgYellow, `Warning ${this.objectsName} repository does not exist. It will be created on demand`);
+                    this.objectsList = [];
+                } else {
+                    console.log(FgRed, `Error while reading ${this.objectsName} repository`);
+                    console.log(FgRed, '--------------------------------------------------');
+                    console.log(FgRed, error);
+                }
             }
         }
     }
     write() {
         this.newETag();
         fs.writeFileSync(this.objectsFile, JSON.stringify(this.objectsList));
+         if (this.cached) {
+            RepositoryCachesManager.add(this.objectsName, this.objectsList);
+        }
     }
     createId() {
         if (this.model.securedId) {

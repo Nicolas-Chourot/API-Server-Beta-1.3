@@ -26,6 +26,7 @@ import CachedRequests from "./cachedRequestsManager.js";
 
 let api_server_version = serverVariables.get("main.api_server_version");
 let api_server_release = serverVariables.get("main.api_server_release");
+let hideHeadRequest = serverVariables.get("main.hideHeadRequest");
 
 global.Server_UTC_Offset = new Date().getTimezoneOffset() / 60;
 
@@ -52,11 +53,14 @@ export default class APIServer {
     async handleHttpRequest(req, res) {
         this.markRequestProcessStartTime();
         this.httpContext = await HttpContext.create(req, res);
-        this.showRequestInfo();
+        if (!this.hiddenRequest())
+            this.showRequestInfo();
         if (!(await this.middlewaresPipeline.handleHttpRequest(this.httpContext)))
             this.httpContext.response.notFound('this end point does not exist...');
-        this.showRequestProcessTime();
-        this.showMemoryUsage();
+        if (!this.hiddenRequest()) {
+            this.showRequestProcessTime();
+            this.showMemoryUsage();
+        }
     }
 
     markRequestProcessStartTime() {
@@ -71,9 +75,8 @@ export default class APIServer {
     showMemoryUsage() {
         // for more info https://www.valentinog.com/blog/node-usage/
         const used = process.memoryUsage();
-        console.log(Reset + FgMagenta, "Memory usage: ", "RSet size:", Math.round(used.rss / 1024 / 1024 * 100) / 100, "Mb |",
-            "Heap size:", Math.round(used.heapTotal / 1024 / 1024 * 100) / 100, "Mb |",
-            "Used size:", Math.round(used.heapUsed / 1024 / 1024 * 100) / 100, "Mb");
+        console.log(Reset + FgMagenta, "Memory usage: ", "Process :", Math.round(used.rss / 1024 / 1024 * 100) / 100, "Mb |",
+            "Heap :", Math.round(used.heapTotal / 1024 / 1024 * 100) / 100, "Mb ");
     }
 
     showRequestInfo() {
@@ -84,6 +87,10 @@ export default class APIServer {
         //console.log("Host ", this.httpContext.hostIp.substring(0, 15), "::", this.httpContext.host);
         if (this.httpContext.payload)
             console.log(BgBlue + FgWhite, "Request payload -->", JSON.stringify(this.httpContext.payload).substring(0, 127) + "...");
+    }
+
+    hiddenRequest() {
+        return (hideHeadRequest && this.httpContext.req.method === 'HEAD');
     }
 
     start() {
@@ -97,6 +104,7 @@ export default class APIServer {
         console.log(FgCyan, "*************************************");
         console.log(BgCyan + FgWhite, `HTTP Server running on ${os.hostname()} and listening port ${this.port}...`);
         console.log(BgCyan + FgWhite, `Server time zone UTC-${Server_UTC_Offset} `);
+        this.showMemoryUsage();
     }
 
 }
