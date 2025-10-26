@@ -6,7 +6,7 @@
 /////////////////////////////////////////////////////////////////////
 // list of implemented parameters :
 //
-// fields = [-]<field name>[,[-]<field name>]
+// fields/select = [-]<field name>[,[-]<field name>]
 //      return only the enumeted field names
 //
 // <field name> = <value with wild cards>

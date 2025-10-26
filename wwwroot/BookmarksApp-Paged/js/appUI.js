@@ -102,7 +102,7 @@ function updateDropDownMenu() {
 }
 async function compileCategories() {
     categories = [];
-    let response = await Bookmarks_API.GetQuery("?fields=category&sort=category");
+    let response = await Bookmarks_API.GetQuery("?select=category&sort=category");
     if (!Bookmarks_API.error) {
         let items = response.data;
         if (items != null) {
