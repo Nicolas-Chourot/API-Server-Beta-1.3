@@ -16,7 +16,7 @@ global.repositoryEtags = {};
 global.jsonFilesPath = "jsonFiles";
 
 export default class Repository {
-   constructor(ModelClass, cached = true) {
+    constructor(ModelClass, cached = true) {
         if (ModelClass == null) {
             throw new Error("Cannot instantiate a repository with a null model.");
         }
@@ -85,7 +85,7 @@ export default class Repository {
     write() {
         this.newETag();
         fs.writeFileSync(this.objectsFile, JSON.stringify(this.objectsList));
-         if (this.cached) {
+        if (this.cached) {
             RepositoryCachesManager.add(this.objectsName, this.objectsList);
         }
     }
@@ -145,7 +145,7 @@ export default class Repository {
             if (index > -1) {
                 this.checkConflict(objectToModify);
                 if (!this.model.state.inConflict) {
-                     if (handleAssets)
+                    if (handleAssets)
                         this.model.handleAssets(objectToModify, this.objectsList[index]);
                     this.objectsList[index] = objectToModify;
                     this.write();
@@ -155,7 +155,7 @@ export default class Repository {
                 this.model.state.notFound = true;
             }
         }
-        return objectToModify;
+        return this.get(objectToModify.Id);
     }
     remove(id) {
         let index = 0;
@@ -171,15 +171,15 @@ export default class Repository {
         }
         return false;
     }
-     getAll(params = null, dontBind = false) {
+    getAll(params = null, dontBind = false) {
         let objectsList = this.objects();
         let bindedDatas = [];
         if (objectsList)
             for (let data of objectsList) {
                 if (dontBind)
-                    bindedDatas.push( this.model.completeAssetsPath(data));
+                    bindedDatas.push(this.model.completeAssetsPath(data));
                 else
-                    bindedDatas.push(this.model.bindExtraData( this.model.completeAssetsPath(data)));
+                    bindedDatas.push(this.model.bindExtraData(this.model.completeAssetsPath(data)));
             }
         let collectionFilter = new CollectionFilter(bindedDatas, params, this.model);
         if (collectionFilter.valid())
@@ -196,14 +196,14 @@ export default class Repository {
             if (object.Id === id) {
 
                 if (dontBind)
-                    return  this.model.completeAssetsPath(object);
+                    return this.model.completeAssetsPath(object);
                 else
-                    return this.model.bindExtraData( this.model.completeAssetsPath(object));
+                    return this.model.bindExtraData(this.model.completeAssetsPath(object));
             }
         }
         return null;
     }
-   removeByIndex(indexToDelete) {
+    removeByIndex(indexToDelete) {
         if (indexToDelete.length > 0) {
             utilities.deleteByIndex(this.objects(), indexToDelete);
             this.write();
