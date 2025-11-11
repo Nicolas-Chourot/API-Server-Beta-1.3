@@ -26,7 +26,6 @@ export function remove(assetToDelete) {
         let assetPath = `./${wwwroot}/${assetsRepository}/${assetToDelete}`;
         if (fs.existsSync(assetPath))
             fs.unlinkSync(assetPath);
-
     }
 }
 export function addHostReference(asset) {
